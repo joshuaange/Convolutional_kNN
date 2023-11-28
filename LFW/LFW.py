@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import scipy
 
+# Loading in the data
 from sklearn.datasets import fetch_lfw_people
 color = True
 people = fetch_lfw_people(min_faces_per_person=3, resize=1, color=color)
@@ -21,7 +22,7 @@ print(people.images.shape)
 print(x_train.shape)
 
 # kNN
-k=10
+k=1
 model = NearestNeighbors(n_neighbors=k)
 model.fit(x_train,y_train)
 test_neighbors = model.kneighbors_graph(x_test)

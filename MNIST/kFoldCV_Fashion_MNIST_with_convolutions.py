@@ -34,7 +34,7 @@ def convolve(kernels, x_pixels, y_pixels, image_data, print_names = []):
 
         if len(print_names) > 0:
             cm = plt.get_cmap('bwr')
-            colored_image = cm(convolved_image[c]/255)
+            colored_image = cm(convolved_image[c]/255) # this prints out the image with the special colormap
             image = Image.fromarray((colored_image[:, :, :3] * 255).astype(np.uint8)).save(print_names[c])
         
     return convolved_image
@@ -57,11 +57,12 @@ def max_pool(input_image, windowsize, print_names = []):
 
         if len(print_names) > 0:
             cm = plt.get_cmap('bwr')
-            colored_image = cm(max_pooled_image[c]/255)
+            colored_image = cm(max_pooled_image[c]/255) # this prints out the image with the special colormap
             image = Image.fromarray((colored_image[:, :, :3] * 255).astype(np.uint8)).save(print_names[c])
 
     return max_pooled_image
 
+# Load data
 import tensorflow as tf
 from tensorflow.keras.datasets import fashion_mnist
 from tensorflow.keras.utils import to_categorical
@@ -92,7 +93,7 @@ kernels[2] = (1./9.) * np.array([[1, 1, 1],
 
 new_size = (max_pool(convolve(kernels, x_pixels, y_pixels, x_train[0]), windowsize).shape)
 print(new_size)
-
+# now let's do all the convolutions
 x_train_new = np.empty((x_train.shape[0],(new_size[0]*new_size[1]*new_size[2])))
 x_test_new = np.empty((x_test.shape[0],(new_size[0]*new_size[1]*new_size[2])))
 
@@ -114,23 +115,18 @@ print(x_train_new.shape)
 print(x_test_new.shape)
 
 # let's define the folds
-n_folds = 5
+n_folds = 2
 size_folds = int(x_train_new.shape[0]/n_folds)
 x_folds = np.empty((n_folds,size_folds,x_train_new.shape[1]))
 y_folds = np.empty((n_folds,size_folds))
 
 for i in range(n_folds):
     x_folds[i] = x_train_new[size_folds*i:size_folds*(i+1)]
-    y_folds[i] = y_train[size_folds*i:size_folds*(i+1)]
+    y_folds[i] = y_train[size_folds*i:size_folds*(i+1)].reshape((-1))
 
 print("Start") # k Fold Cross Validation
-k_vals = [1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,25,50,75,100]
+k_vals = [1,2,3,5,7,9,12,15,25,50]
 cv_error_vals = np.zeros((len(k_vals)))
-
-x_fold_training = np.empty((size_folds*(n_folds-1),x_train_new.shape[1]))
-y_fold_training = np.empty((size_folds*(n_folds-1)))
-x_fold_testing = np.empty((size_folds,x_train_new.shape[1]))
-y_fold_testing = np.empty((size_folds))
 
 # kNN
 for i in range(len(k_vals)):
@@ -141,13 +137,18 @@ for i in range(len(k_vals)):
 
         # let's set up training and testing data
         s = 0
-        for k in range(n_folds):
-            if j==k:
-                x_fold_testing = x_folds[k]
-                y_fold_testing = y_folds[k]
+        x_fold_training = np.empty((size_folds*(n_folds-1),x_train_new.shape[1]))
+        y_fold_training = np.empty((size_folds*(n_folds-1)))
+        x_fold_testing = np.empty((size_folds,x_train_new.shape[1]))
+        y_fold_testing = np.empty((size_folds))
+        
+        for q in range(n_folds):
+            if j==q:
+                x_fold_testing = x_folds[q]
+                y_fold_testing = y_folds[q]
             else:
-                x_fold_training[size_folds*s:size_folds*(s+1)] = x_folds[k]
-                y_fold_training[size_folds*s:size_folds*(s+1)] = y_folds[k]
+                x_fold_training[size_folds*s:size_folds*(s+1)] = x_folds[q]
+                y_fold_training[size_folds*s:size_folds*(s+1)] = y_folds[q].reshape((-1))
                 s += 1
 
         model = NearestNeighbors(n_neighbors=k)
@@ -168,7 +169,7 @@ for i in range(len(k_vals)):
         
         conf_matrix = confusion_matrix(y_fold_testing, y_pred)
         print("k error:" + str(1 - conf_matrix.trace()/conf_matrix.sum()))
-        cv_error_vals[i] += (1 - conf_matrix.trace()/conf_matrix.sum())/n_folds
+        cv_error_vals[i] += float((1. - conf_matrix.trace()/conf_matrix.sum())/n_folds) # adding it to the cv error array
 
 print(k_vals)
 print(cv_error_vals)

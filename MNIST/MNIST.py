@@ -8,6 +8,7 @@ from PIL import Image
 import scipy
 import typing_extensions
 
+# Loading in the data
 import tensorflow as tf
 from tensorflow.keras.datasets import fashion_mnist
 from tensorflow.keras.utils import to_categorical
@@ -17,6 +18,7 @@ print("Total data points, x pixels, y pixels, color channels")
 print(x_train.shape)
 print(x_test.shape)
 
+# Transforms array into a line array
 x_train = np.reshape(x_train,(x_train.shape[0],-1))
 x_test = np.reshape(x_test,(x_test.shape[0],-1))
 
@@ -24,7 +26,7 @@ print(x_train.shape)
 print(x_test.shape)
 
 # kNN
-k=10
+k=1
 model = NearestNeighbors(n_neighbors=k)
 model.fit(x_train,y_train)
 test_neighbors = model.kneighbors_graph(x_test)

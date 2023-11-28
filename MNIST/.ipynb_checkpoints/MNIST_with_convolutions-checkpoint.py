@@ -34,7 +34,7 @@ def convolve(kernels, x_pixels, y_pixels, image_data, print_names = []):
 
         if len(print_names) > 0:
             cm = plt.get_cmap('bwr')
-            colored_image = cm(convolved_image[c]/255)
+            colored_image = cm(convolved_image[c]/255) # this prints out the image with the special colormap
             image = Image.fromarray((colored_image[:, :, :3] * 255).astype(np.uint8)).save(print_names[c])
         
     return convolved_image
@@ -49,7 +49,7 @@ def max_pool(input_image, windowsize, print_names = []):
     for c in range(channels):
         for i in range(x_pixels):
             for j in range(y_pixels):
-                sum = np.zeros((windowsize,windowsize))
+                sum = np.zeros((windowsize,windowsize)) # this goes through the window and does the max pool calculation
                 for i2 in range(windowsize):
                     for j2 in range(windowsize):
                         sum[i2][j2] = input_image[c][windowsize*i + i2][windowsize*j + j2]
@@ -57,11 +57,12 @@ def max_pool(input_image, windowsize, print_names = []):
 
         if len(print_names) > 0:
             cm = plt.get_cmap('bwr')
-            colored_image = cm(max_pooled_image[c]/255)
+            colored_image = cm(max_pooled_image[c]/255) # this prints out the image with the special colormap
             image = Image.fromarray((colored_image[:, :, :3] * 255).astype(np.uint8)).save(print_names[c])
 
     return max_pooled_image
-    
+
+# Load data
 import tensorflow as tf
 from tensorflow.keras.datasets import fashion_mnist
 from tensorflow.keras.utils import to_categorical
@@ -77,24 +78,24 @@ windowsize = 5
 number_of_kernels = 3
 kernels = np.empty((number_of_kernels,3,3))
 # first kernel
-kernels[0] = np.array([[1,1,1],
+kernels[0] = np.array([[-1, -2, -1],
                          [0,0,0],
-                         [-1, -1, -1]])
+                         [1, 2, 1]])
 # second kernel
-kernels[1] = np.array([[1, 0, -1],
-                         [1, 0, -1],
-                         [1, 0, -1]])
+kernels[1] = np.array([[-1, 0, 1],
+                         [-2, 0, 2],
+                         [-1, 0, 1]])
 # third kernel
-kernels[2] = np.array([[-1, -1, -1],
-                         [-1, 8, -1],
-                         [-1, -1, -1]])
-
+kernels[2] = (1./9.) * np.array([[1, 1, 1],
+                         [1, 1, 1],
+                         [1, 1, 1]])
+# now let's do all the convolutions
 new_size = (max_pool(convolve(kernels, x_pixels, y_pixels, x_train[0]), windowsize).shape)
 print(new_size)
 
 x_train_new = np.empty((x_train.shape[0],(new_size[0]*new_size[1]*new_size[2])))
 x_test_new = np.empty((x_test.shape[0],(new_size[0]*new_size[1]*new_size[2])))
-
+ 
 print("Starting testing data")
 for i in range(len(x_test)):
     if i % 100 ==0:
@@ -114,7 +115,7 @@ print(x_test_new.shape)
 
 # kNN
 print("Start")
-k=10
+k=7
 model = NearestNeighbors(n_neighbors=k)
 model.fit(x_train_new,y_train)
 test_neighbors = model.kneighbors_graph(x_test_new)
